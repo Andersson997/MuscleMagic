@@ -15,4 +15,4 @@ const firebaseConfig = {
 // Initialize Firebase
 export const MuscleMagicApp = initializeApp(firebaseConfig);
 export const MuscleMagicAuth = getAuth(MuscleMagicApp);
-export const MuscleMagicDb = getAuth(MuscleMagicApp);
+export const MuscleMagicDb = getFirestore(MuscleMagicApp);

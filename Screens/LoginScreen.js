@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, KeyboardAvoidingView} from 'react-native';
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, KeyboardAvoidingView, Pressable} from 'react-native';
 import React, { useState } from 'react';
 import { MuscleMagicAuth } from '../Database/FireBaseConfig';
 import { async } from '@firebase/util';
@@ -38,14 +38,12 @@ const LoginScreen = () => {
 
     return (
         <View style={styles.container}>
-            
-
-            <TextInput value={email} style={styles.container} placeholder="email" autoCapitalize='none' onChangeText={(text) => setEmail(text)} />
-            <TextInput secureTextEntry={true} value={password} style={styles.container} placeholder="password" autoCapitalize='none' onChangeText={(text) => setPassword(text)} />
+            <TextInput value={email} style={styles.input} placeholder="email" autoCapitalize='none' onChangeText={(text) => setEmail(text)} />
+            <TextInput secureTextEntry={true} value={password} style={styles.input} placeholder="password" autoCapitalize='none' onChangeText={(text) => setPassword(text)} />
             {loading ? <ActivityIndicator size="large" color="#0000ff"/>
             :<>
-            <Button title='Login' onPress={signIn}/>
-            <Button title='Register' onPress={signUp}/>
+            <Pressable title='Login' onPress={signIn}/>
+            <Pressable title='Register' onPress={signUp}/>
             </>
             }
             
@@ -57,18 +55,8 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
     container: {
-      flex: 1,
-    },
-    image: {
-      flex: 1,
       justifyContent: "center",
-    },
-    text: {
-      color: "white",
-      fontSize: 42,
-      lineHeight: 84,
-      fontWeight: "bold",
-      textAlign: "center",
-      backgroundColor: "#000000c0",
-    },
+      alignItems: "center"
+    }
+    
   });

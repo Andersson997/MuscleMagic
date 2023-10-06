@@ -1,5 +1,5 @@
 
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
 import HomeScreen from './Screens/HomeScreen';
@@ -10,6 +10,8 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import React, { useState, useEffect } from 'react';
 import { MuscleMagicAuth } from './Database/FireBaseConfig';
+import Svg, { Image} from 'react-native-svg';
+import StartScreen from './Screens/StartScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -83,11 +85,13 @@ export default function App() {
 
     <View style={styles.container}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="LoginScreen">
+        <Stack.Navigator initialRouteName="LoginScreen" screenOptions={{
+    headerShown: false
+  }}>
         {user ?(
           <Stack.Screen name="LoginScreen" component={MyTabs} />
           ) : (
-            <Stack.Screen name="main" component={LoginScreen} />
+            <Stack.Screen name="Start" component={StartScreen} />
             )}
         </Stack.Navigator>
       </NavigationContainer>
@@ -98,18 +102,21 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'flex-end'
   },
-  image: {
-    flex: 1,
-    justifyContent: "center",
+  button:{
+    backgroundColor: "black",
+    height: 55,
+    alignItems: 'center',
+    justifyContent:'center',
+    borderRadius: 35,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: 'white'
   },
-  text: {
-    color: "white",
-    fontSize: 42,
-    lineHeight: 84,
-    fontWeight: "bold",
-    textAlign: "center",
-    backgroundColor: "#000000c0",
-  },
+  buttonText:{
+
+  }
 });
 

@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import {getAuth} from "firebase/auth";
+import {getAuth, initializeAuth, getReactNativePersistence} from "firebase/auth";
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import {getFirestore} from "firebase/firestore";
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -14,5 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const MuscleMagicApp = initializeApp(firebaseConfig);
-export const MuscleMagicAuth = getAuth(MuscleMagicApp);
+export const MuscleMagicAuth = initializeAuth(MuscleMagicApp, {
+  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+});
 export const MuscleMagicDb = getFirestore(MuscleMagicApp);

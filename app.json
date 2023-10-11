@@ -9,6 +9,9 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
+      "androidStatusBar": {
+        "backgroundColor": "#000000"
+      },
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -18,10 +21,12 @@
       "supportsTablet": true
     },
     "android": {
+     
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
+       
     },
     "web": {
       "favicon": "./assets/favicon.png"

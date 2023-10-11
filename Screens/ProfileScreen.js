@@ -2,7 +2,7 @@ import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 function ProfileScreen () {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={styles.container}>
         <Text>Profile!</Text>
       </View>
     );
@@ -10,3 +10,11 @@ function ProfileScreen () {
 }
 
 export default ProfileScreen;
+
+const styles = StyleSheet.create ({
+container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
+}
+});

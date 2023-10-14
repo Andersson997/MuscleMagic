@@ -142,7 +142,7 @@ function StartScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+    <KeyboardAvoidingView style={{ flex: 1 }}  behavior={Platform.OS === "ios" ? "padding" : "undefined"}>
       <Animated.View style={styles.container}>
         <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
           <Svg height={height + 100} width={width}>
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   formInputContainer: {
-    //marginBottom: 70,
+    marginBottom: 70,
     ...StyleSheet.absoluteFill,
     zIndex: -1,
     justifyContent: "center",

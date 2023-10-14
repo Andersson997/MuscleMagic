@@ -4,17 +4,44 @@ import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./Screens/HomeScreen";
 import ProfileScreen from "./Screens/ProfileScreen";
 import ScheduleScreen from "./Screens/ScheduleScreen";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import {createStackNavigator} from '@react-navigation/stack'
 import { onAuthStateChanged, User } from "firebase/auth";
 import React, { useState, useEffect } from "react";
 import { MuscleMagicAuth } from "./Database/FireBaseConfig";
 import Svg, { Image } from "react-native-svg";
 import StartScreen from "./Screens/StartScreen";
 import { AntDesign } from "@expo/vector-icons";
-
-
+import ExerciseSearchScreen from "./Screens/ExerciseSearchScreen";
+import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import EditProfileScreen from "./Screens/EditProfileScreen";
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
+
+const ProfileStack = ({navigation}) => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="Profile"
+      component={ProfileScreen}
+      options={{
+        headerShown: false,
+      }}
+    />
+    <Stack.Screen
+      name="EditProfile"
+      component={EditProfileScreen}
+      options={{
+        headerTitle: 'Edit Profile',
+        headerBackTitleVisible: false,
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#fff',
+          elevation: 0,
+        },
+      }}
+    />
+  </Stack.Navigator>
+);
 
 function MyTabs() {
   return (
@@ -47,7 +74,7 @@ function MyTabs() {
 
 <Tab.Screen
   name="Profile"
-  component={ProfileScreen}
+  component={ProfileStack}
   options={{
     title: "Profile",
     tabBarIcon: () => (
@@ -56,7 +83,20 @@ function MyTabs() {
     headerShown: false,
   }}
 />
+<Tab.Screen
+  name="ExerciseSearch"
+  component={ExerciseSearchScreen}
+  options={{
+    title: "ExerciseSearch",
+    tabBarIcon: () => (
+      <MaterialCommunityIcons name="dumbbell" size={28} color="white" />
+    ),
+    headerShown: false,
+  }}
+/>
+
     </Tab.Navigator>
+    
   );
 }
 
@@ -79,9 +119,11 @@ export default function App() {
           }}
         >
           {user ? (
-            <Tab.Screen name="LoginScreen" component={MyTabs} />
+            
+            <Stack.Screen name="LoginScreen" component={MyTabs} />
           ) : (
             <Stack.Screen name="Start" component={StartScreen} />
+            
           )}
         </Stack.Navigator>
       </NavigationContainer>

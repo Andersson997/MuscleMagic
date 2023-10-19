@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef ,useState,useCallback } from "react";
 import {
   Dimensions,
   Pressable,
@@ -8,7 +8,8 @@ import {
   View,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  TouchableOpacity,
 } from "react-native";
 import Svg, { Image, Ellipse, ClipPath } from "react-native-svg";
 import Animated, {
@@ -18,25 +19,164 @@ import Animated, {
   withTiming,
   withDelay,
 } from "react-native-reanimated";
-import { MuscleMagicAuth } from "../Database/FireBaseConfig";
-import { async } from "@firebase/util";
+import {
+  MuscleMagicAuth,
+  MuscleMagicDb,
+  MuscleMagicStorage,
+} from "../Database/FireBaseConfig";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
- initializeAuth
 } from "firebase/auth";
-
+import { ScrollView } from "react-native-gesture-handler";
+import { doc, setDoc, collection } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
+import {ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
 
 const { height, width } = Dimensions.get("window");
 
 function StartScreen() {
+  const [selectedImage, setSelectedImage] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [country, setCountry] = useState("");
+  const bottomSheetModalRef = useRef(null);
+  const snapPoints = ["48%"];
   const [loading, setLoading] = useState(false);
   const auth = MuscleMagicAuth;
+  const db = MuscleMagicDb;
+  const storage = MuscleMagicStorage;
 
-  
+  function handlePresentModal() {
+    bottomSheetModalRef.current?.present();
+  }
+  function handleCloseModal() {
+    bottomSheetModalRef.current?.close();
+  }
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={1}
+        animatedIndex={{
+          value: 1,
+        }}
+      />
+    ),
+    []
+  );
 
+  const selectImage = function (useLibrary) {
+    const options = {
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.1,
+    };
+
+    if (useLibrary) {
+      return new Promise(function (resolve, reject) {
+        ImagePicker.launchImageLibraryAsync(options)
+          .then(function (response) {
+            if (
+              !response.canceled &&
+              response.assets &&
+              response.assets.length > 0
+            ) {
+              resolve(response);
+            } else {
+              reject("Image selection cancelled");
+            }
+          })
+          .then(function () {
+            handleCloseModal();
+          })
+          .catch(function (error) {
+            reject(error);
+          });
+      });
+    } else {
+      return new Promise(function (resolve, reject) {
+        ImagePicker.requestCameraPermissionsAsync()
+          .then(function () {
+            return ImagePicker.launchCameraAsync(options);
+          })
+          .then(function (response) {
+            if (
+              !response.canceled &&
+              response.assets &&
+              response.assets.length > 0
+            ) {
+              resolve(response);
+            } else {
+              reject("Camera operation cancelled");
+            }
+          })
+          .then(function () {
+            handleCloseModal();
+          })
+          .catch(function (error) {
+            reject(error);
+          });
+      });
+    }
+  };
+  const handleImageSelection = async (useLibrary) => {
+    try {
+      const response = await selectImage(useLibrary); // Pass true to use the library for image selection
+      if (response.assets && response.assets.length > 0) {
+        setSelectedImage(response.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error selecting image:", error);
+    }
+  };
+
+  const createUserProfile = async (user) => {
+    try {
+      if (selectedImage) {
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `profileImages/${user.uid}`);
+
+        await uploadBytes(storageRef, blob);
+
+        // Get the download URL of the uploaded image
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // Store the download URL in Firestore along with other user data
+        const userRef = doc(collection(db, "users"), user.uid);
+        await setDoc(userRef, {
+          country: country,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+          profileImageUrl: downloadURL, 
+          workouts: 0,
+        });
+      } else {
+        // If no image is selected, store other user data in Firestore
+        const userRef = doc(collection(db, "users"), user.uid);
+        await setDoc(userRef, {
+          country: country,
+          email: email,
+          firstName: firstName,
+          lastName: lastName,
+        });
+      }
+
+      console.log("User profile created successfully!");
+    } catch (error) {
+      console.error("Error creating user profile:", error);
+    }
+  };
   const signIn = async () => {
     setLoading(true);
     try {
@@ -56,7 +196,10 @@ function StartScreen() {
         auth,
         email,
         password
-      );
+      ).then((userCredential) => {
+        const user = userCredential.user;
+        return createUserProfile(user);
+      });
       console.log(response);
       alert("Check your email!");
     } catch (error) {
@@ -142,7 +285,11 @@ function StartScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }}  behavior={Platform.OS === "ios" ? "padding" : "undefined"}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "undefined"}
+    >
+     <BottomSheetModalProvider>
       <Animated.View style={styles.container}>
         <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
           <Svg height={height + 100} width={width}>
@@ -158,7 +305,9 @@ function StartScreen() {
             />
           </Svg>
           <Pressable onPress={() => (imagePosition.value = 1)}>
-            <Animated.View style={[styles.closeButtonContainer, closeButtonContainerStyle]}>
+            <Animated.View
+              style={[styles.closeButtonContainer, closeButtonContainerStyle]}
+            >
               <Text>X</Text>
             </Animated.View>
           </Pressable>
@@ -175,30 +324,79 @@ function StartScreen() {
             </Pressable>
           </Animated.View>
           <Animated.View style={[styles.formInputContainer, formAnimatedStyle]}>
-            <TextInput
-              placeholder="Email"
-              placeholderTextColor="white"
-              style={styles.textInput}
-              value={email}
-              autoCapitalize="none"
-              onChangeText={(text) => setEmail(text)}
-            />
-            {isRegistering && (
+            <ScrollView showsVerticalScrollIndicator="false">
               <TextInput
-                placeholder="Full Name"
+                placeholder="Email"
                 placeholderTextColor="white"
                 style={styles.textInput}
+                value={email}
+                autoCapitalize="none"
+                onChangeText={(text) => setEmail(text)}
               />
-            )}
-            <TextInput
-              placeholder="Password"
-              placeholderTextColor="white"
-              style={styles.textInput}
-              secureTextEntry={true}
-              value={password}
-              autoCapitalize="none"
-              onChangeText={(text) => setPassword(text)}
-            />
+              {isRegistering && (
+                <View>
+                  <TextInput
+                    placeholder="First Name"
+                    placeholderTextColor="white"
+                    style={styles.textInput}
+                    onChangeText={(text) => setFirstName(text)}
+                  />
+                  <TextInput
+                    placeholder="Last Name"
+                    placeholderTextColor="white"
+                    style={styles.textInput}
+                    onChangeText={(text) => setLastName(text)}
+                  />
+                  <TextInput
+                    placeholder="Country"
+                    placeholderTextColor="white"
+                    style={styles.textInput}
+                    onChangeText={(text) => setCountry(text)}
+                  />
+                  <TouchableOpacity style={styles.button} onPress={handlePresentModal}><Text style={styles.buttonText}>Choose profile picture</Text></TouchableOpacity>
+                 <BottomSheetModal
+            ref={bottomSheetModalRef}
+            index={0}
+            snapPoints={snapPoints}
+            backdropComponent={renderBackdrop}
+          >
+            <View style={styles.panel}>
+              <Text style={styles.buttonText}>Upload Photo</Text>
+              <Text style={styles.buttonText}>
+                Choose Your Profile Picture
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => handleImageSelection(false)}
+            >
+              <Text style={styles.buttonText}>Take Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => handleImageSelection(true)}
+            >
+              <Text style={styles.buttonText}>Choose From Library</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleCloseModal}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </BottomSheetModal>
+                </View>
+              )}
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="white"
+                style={styles.textInput}
+                secureTextEntry={true}
+                value={password}
+                autoCapitalize="none"
+                onChangeText={(text) => setPassword(text)}
+              />
+            </ScrollView>
             {loading ? (
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
@@ -217,6 +415,7 @@ function StartScreen() {
           </Animated.View>
         </View>
       </Animated.View>
+      </BottomSheetModalProvider> 
     </KeyboardAvoidingView>
   );
 }
@@ -247,10 +446,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   bottomContainer: {
-
+    marginBottom: 25,
     justifyContent: "center",
     height: height / 3,
-    zIndex: 1
+    zIndex: 1,
   },
   textInput: {
     height: 50,
@@ -261,8 +460,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     borderRadius: 25,
     paddingLeft: 10,
-   
-  
   },
   formButton: {
     backgroundColor: "black",
@@ -271,7 +468,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 35,
     marginHorizontal: 20,
-
     borderWidth: 1,
     borderColor: "white",
     shadowColor: "#000",
@@ -284,7 +480,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   formInputContainer: {
-    marginBottom: 70,
     ...StyleSheet.absoluteFill,
     zIndex: -1,
     justifyContent: "center",

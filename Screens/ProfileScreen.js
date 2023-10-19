@@ -8,12 +8,67 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import React, { useState, useEffect } from "react";
+import { MuscleMagicAuth, MuscleMagicDb } from "../Database/FireBaseConfig";
+import LoadingScreen from "../Components/LoadingComponent";
+import { fetchCurrentUser } from "../Components/FetchUserData";
+import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
+function ProfileScreen({ navigation }) {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [workouts, setWorkouts] = useState(0);
+  const user = MuscleMagicAuth.currentUser;
+  const db = MuscleMagicDb;
 
-import { createNativeNavigator } from "@react-navigation/native-stack";
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchCurrentUser();
+      setUserData(data);
+      setWorkouts(data.workouts);
+      setLoading(false);
+    };
 
-function ProfileScreen({navigation}) {
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!userData) {
+    return <Text>Error fetching user data</Text>; // Handle error scenario
+  }
+  const updatedWorkoutPlus = {
+    country: userData.country,
+    email: userData.email,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    profileImageUrl: userData.profileImageUrl,
+    workouts: userData.workouts + 1,
+  };
+  const updatedWorkoutMinus = {
+    country: userData.country,
+    email: userData.email,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    profileImageUrl: userData.profileImageUrl,
+    workouts: userData.workouts - 1,
+  };
+
+  const updateUserProfile = async (user, updatedData) => {
+    try {
+      const userRef = doc(collection(db, "users"), user.uid);
+      await updateDoc(userRef, updatedData);
+      setWorkouts(prevWorkouts => prevWorkouts + updatedData.workouts - userData.workouts);
+      console.log("Success");
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+    }
+  };
+ 
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={{
@@ -24,31 +79,57 @@ function ProfileScreen({navigation}) {
       >
         <Image
           style={styles.userImg}
-          source={require("../assets/user-8.jpg")}
+          source={{
+            uri: userData.profileImageUrl,
+          }}
         ></Image>
-        <Text style={styles.userName}>Jenny Doe</Text>
+        <Text style={styles.userName}>{userData.firstName}</Text>
         <Text style={styles.aboutUser}>
           Lorem ipsum dolor sit amet, consecteur adipiscing elit. Mauris a elit
           nisl.
         </Text>
         <View style={styles.userBtnWrapper}>
-          <TouchableOpacity style={styles.userBtn} onPress={() => {
-                  navigation.navigate('EditProfile');
-                }}>
+          <TouchableOpacity
+            style={styles.userBtn}
+            onPress={() => {
+              navigation.navigate("EditProfile");
+            }}
+          >
             <Text style={styles.userBtnTxt}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-            <Text style={styles.userBtnTxt}>LogOut</Text>
+            <Text
+              style={styles.userBtnTxt}
+              onPress={() => MuscleMagicAuth.signOut()}
+            >
+              LogOut
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.userInfoWrapper}>
-            <View style={styles.userInfoItem}>
-                <Text style={styles.userInfoTitle}>22</Text>
-                <Text style={styles.userInfoSubTitle}>Workouts</Text>
-            </View>
+          <View style={styles.userInfoItem}>
+            <TouchableOpacity
+              style={styles.plusButton}
+              onPress={() => {
+                updateUserProfile(user, updatedWorkoutMinus);
+              }}
+            >
+              <Text style={{ fontSize: 50 }}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.userInfoTitle}>{workouts}</Text>
+            <TouchableOpacity
+              style={styles.minusButton}
+              onPress={() => {
+                updateUserProfile(user, updatedWorkoutPlus);
+              }}
+            >
+              <Text style={{ fontSize: 50 }}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+        <Text style={styles.userInfoSubTitle}>Workouts</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -59,6 +140,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     padding: 20,
+    marginTop: 70
   },
   userImg: {
     height: 150,
@@ -82,18 +164,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     width: "100%",
+    height: 45,
     marginBottom: 10,
   },
   userBtn: {
     borderColor: "#2e64e5",
     borderWidth: 2,
     borderRadius: 3,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginHorizontal: 5,
+    paddingVertical: 11,
+    paddingHorizontal: 40,
+    marginHorizontal: 3,
+    
   },
   userBtnTxt: {
     color: "#2e64e5",
+    fontSize: 16,
   },
   userInfoWrapper: {
     flexDirection: "row",
@@ -102,16 +187,18 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   userInfoItem: {
+    flexDirection: "row",
     justifyContent: "center",
   },
   userInfoTitle: {
-    fontSize: 20,
+    fontSize: 50,
     fontWeight: "bold",
     marginBottom: 5,
+    marginHorizontal: 50,
     textAlign: "center",
   },
   userInfoSubTitle: {
-    fontSize: 12,
+    fontSize: 20,
     color: "#666",
     textAlign: "center",
   },

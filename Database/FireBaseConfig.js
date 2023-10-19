@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import {getAuth, initializeAuth, getReactNativePersistence} from "firebase/auth";
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 import {getFirestore} from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDP3QLuZW4PXUdwFAolmJpJgZQel36WQr4",
@@ -19,3 +20,4 @@ export const MuscleMagicAuth = initializeAuth(MuscleMagicApp, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
 export const MuscleMagicDb = getFirestore(MuscleMagicApp);
+export const MuscleMagicStorage = getStorage(MuscleMagicApp);

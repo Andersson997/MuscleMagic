@@ -201,7 +201,6 @@ function StartScreen() {
         return createUserProfile(user);
       });
       console.log(response);
-      alert("Check your email!");
     } catch (error) {
       console.log(error);
       alert("Sign up failed: " + error.message);
@@ -324,7 +323,7 @@ function StartScreen() {
             </Pressable>
           </Animated.View>
           <Animated.View style={[styles.formInputContainer, formAnimatedStyle]}>
-            <ScrollView showsVerticalScrollIndicator="false">
+            <ScrollView >
               <TextInput
                 placeholder="Email"
                 placeholderTextColor="white"

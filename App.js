@@ -14,6 +14,7 @@ import { AntDesign } from "@expo/vector-icons";
 import ExerciseSearchScreen from "./Screens/ExerciseSearchScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import EditProfileScreen from "./Screens/EditProfileScreen";
+import CreateWorkoutScreen from "./Screens/CreateWorkoutScreen";
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
@@ -23,7 +24,7 @@ const ProfileStack = ({ navigation, userId }) => (
       name="TabProfile"
       component={ProfileScreen}
       options={{
-        headerShown: false,
+        headerShown: false
       }}
     />
     <Stack.Screen
@@ -31,6 +32,33 @@ const ProfileStack = ({ navigation, userId }) => (
       component={EditProfileScreen}
       options={{
         headerTitle: "Edit Profile",
+        headerBackTitleVisible: false,
+        headerTitleAlign: "center",
+        headerTransparent: true,
+        headerStyle: {
+          backgroundColor: "#fff",
+          shadowColor: "#fff",
+          elevation: 0,
+        },
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const ScheduleStack = ({ navigation, userId }) => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="TabSchedule"
+      component={ScheduleScreen}
+      options={{
+        headerShown: false
+      }}
+    />
+    <Stack.Screen
+      name="CreateWorkout"
+      component={CreateWorkoutScreen}
+      options={{
+        headerTitle: "Create Workout",
         headerBackTitleVisible: false,
         headerTitleAlign: "center",
         headerTransparent: true,
@@ -55,7 +83,7 @@ function MyTabs() {
     >
       <Tab.Screen
         name="Schedule"
-        component={ScheduleScreen}
+        component={ScheduleStack}
         options={{
           title: "Schedule",
           tabBarIcon: () => (
@@ -71,6 +99,7 @@ function MyTabs() {
           title: "Home",
           tabBarIcon: () => <AntDesign name="home" size={28} color="white" />,
           headerShown: false,
+          tabBarVisible: false,
         }}
       />
 

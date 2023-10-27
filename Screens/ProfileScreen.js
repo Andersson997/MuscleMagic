@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { MuscleMagicAuth, MuscleMagicDb } from "../Database/FireBaseConfig";
@@ -65,10 +66,11 @@ function ProfileScreen({ navigation }) {
       console.error("Error updating user profile:", error);
     }
   };
- 
+  
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+        <ImageBackground style={StyleSheet.absoluteFill} source={require('../assets/bakgrundsbild.jpg')}>
+   
       <ScrollView
         style={styles.container}
         contentContainerStyle={{
@@ -129,7 +131,7 @@ function ProfileScreen({ navigation }) {
         </View>
         <Text style={styles.userInfoSubTitle}>Workouts</Text>
       </ScrollView>
-    </View>
+      </ImageBackground>
   );
 }
 
@@ -138,9 +140,10 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: 'rgba(52, 52, 52, 0.0)',
     padding: 20,
-    marginTop: 70
+    marginTop: 70,
+    
   },
   userImg: {
     height: 150,
@@ -148,17 +151,19 @@ const styles = StyleSheet.create({
     borderRadius: 75,
   },
   userName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginTop: 10,
     marginBottom: 10,
+    color: "white"
   },
   aboutUser: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#666",
+    color: "white",
     textAlign: "center",
     marginBottom: 10,
+    
   },
   userBtnWrapper: {
     flexDirection: "row",
@@ -199,7 +204,7 @@ const styles = StyleSheet.create({
   },
   userInfoSubTitle: {
     fontSize: 20,
-    color: "#666",
+    color: "white",
     textAlign: "center",
   },
 });

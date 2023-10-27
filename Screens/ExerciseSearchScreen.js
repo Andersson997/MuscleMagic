@@ -12,12 +12,11 @@ import React, { useState, useEffect } from "react";
 import { decode } from "html-entities";
 function ExerciseSearchScreen() {
   const [triviaList, setTriviaList] = useState([]);
-  const [imageList, setImageList] = useState([]);
   const [visibleAnswers, setVisibleAnswers] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetch("https://wger.de/api/v2/exercise/?language=2&limit=397")
+    fetch("https://wger.de/api/v2/exercise/?language=2&limit=399")
       .then((response) => response.json())
       .then((data) => {
         const initialVisibleAnswers = {};
@@ -27,7 +26,7 @@ function ExerciseSearchScreen() {
         setTriviaList(data.results);
         setVisibleAnswers(initialVisibleAnswers);
       });
-  }, []);
+  },[]);
 
   const handleToggleAnswer = (index) => {
     setVisibleAnswers((prevState) => ({
@@ -57,13 +56,13 @@ function ExerciseSearchScreen() {
       <ScrollView>
         {filteredTriviaList.map(
           (trivia, index) => (
-            (trivia.description = trivia.description
-              .replace("<p>", "")
-              .replace("</p>", "")
-              .replace("<ol>", "")
-              .replace("</ol>", "")
-              .replace("<li>", "")
-              .replace("</li>", "")),
+            // (trivia.description = trivia.description
+            //   .replace("<p>", "")
+            //   .replace("</p>", "")
+            //   .replace("<ol>", "")
+            //   .replace("</ol>", "")
+            //   .replace("<li>", "")
+            //   .replace("</li>", "")),
             (
               <Pressable onPress={() => handleToggleAnswer(index)} key={index}>
                 <View key={index}>
@@ -74,7 +73,7 @@ function ExerciseSearchScreen() {
                       <View>
                         <Text style={styles.text}>Description</Text>
                         <Text style={styles.text}>
-                          {decode(trivia.description, { level: "all" })}
+                          {decode(trivia.instructions, { level: "all" })}
                         </Text>
                       </View>
                     )}

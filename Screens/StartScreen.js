@@ -1,4 +1,4 @@
-import React, { useRef ,useState,useCallback } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
   Dimensions,
   Pressable,
@@ -31,13 +31,13 @@ import {
 import { ScrollView } from "react-native-gesture-handler";
 import { doc, setDoc, collection } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
-import {ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
-
+import { selectImage } from "../Components/SelectImageComponent";
 const { height, width } = Dimensions.get("window");
 
 function StartScreen() {
@@ -73,61 +73,6 @@ function StartScreen() {
     []
   );
 
-  const selectImage = function (useLibrary) {
-    const options = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.1,
-    };
-
-    if (useLibrary) {
-      return new Promise(function (resolve, reject) {
-        ImagePicker.launchImageLibraryAsync(options)
-          .then(function (response) {
-            if (
-              !response.canceled &&
-              response.assets &&
-              response.assets.length > 0
-            ) {
-              resolve(response);
-            } else {
-              reject("Image selection cancelled");
-            }
-          })
-          .then(function () {
-            handleCloseModal();
-          })
-          .catch(function (error) {
-            reject(error);
-          });
-      });
-    } else {
-      return new Promise(function (resolve, reject) {
-        ImagePicker.requestCameraPermissionsAsync()
-          .then(function () {
-            return ImagePicker.launchCameraAsync(options);
-          })
-          .then(function (response) {
-            if (
-              !response.canceled &&
-              response.assets &&
-              response.assets.length > 0
-            ) {
-              resolve(response);
-            } else {
-              reject("Camera operation cancelled");
-            }
-          })
-          .then(function () {
-            handleCloseModal();
-          })
-          .catch(function (error) {
-            reject(error);
-          });
-      });
-    }
-  };
   const handleImageSelection = async (useLibrary) => {
     try {
       const response = await selectImage(useLibrary); // Pass true to use the library for image selection
@@ -158,8 +103,8 @@ function StartScreen() {
           email: email,
           firstName: firstName,
           lastName: lastName,
-          profileImageUrl: downloadURL, 
-          workouts: 0,
+          profileImageUrl: downloadURL,
+          workoutCounter: 0,
         });
       } else {
         // If no image is selected, store other user data in Firestore
@@ -288,133 +233,144 @@ function StartScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "undefined"}
     >
-     <BottomSheetModalProvider>
-      <Animated.View style={styles.container}>
-        <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
-          <Svg height={height + 100} width={width}>
-            <ClipPath id="clipPathId">
-              <Ellipse cx={width / 2} rx={height} ry={height + 100} />
-            </ClipPath>
-            <Image
-              href={require("../assets/bildfyra.jpg")}
-              width={width + 100}
-              height={height + 100}
-              preserveAspectRatio="xMidYMid slice"
-              clipPath="url(#clipPathId)"
-            />
-          </Svg>
-          <Pressable onPress={() => (imagePosition.value = 1)}>
-            <Animated.View
-              style={[styles.closeButtonContainer, closeButtonContainerStyle]}
-            >
-              <Text>X</Text>
+      <BottomSheetModalProvider>
+        <Animated.View style={styles.container}>
+          <Animated.View style={[StyleSheet.absoluteFill, imageAnimatedStyle]}>
+            <Svg height={height + 100} width={width}>
+              <ClipPath id="clipPathId">
+                <Ellipse cx={width / 2} rx={height} ry={height + 100} />
+              </ClipPath>
+              <Image
+                href={require("../assets/bildfyra.jpg")}
+                width={width + 100}
+                height={height + 100}
+                preserveAspectRatio="xMidYMid slice"
+                clipPath="url(#clipPathId)"
+              />
+            </Svg>
+            <Pressable onPress={() => (imagePosition.value = 1)}>
+              <Animated.View
+                style={[styles.closeButtonContainer, closeButtonContainerStyle]}
+              >
+                <Text>X</Text>
+              </Animated.View>
+            </Pressable>
+          </Animated.View>
+          <View style={styles.bottomContainer}>
+            <Animated.View style={buttonsAnimatedStyle}>
+              <Pressable style={styles.button} onPress={loginHandler}>
+                <Text style={styles.buttonText}>LOG IN</Text>
+              </Pressable>
             </Animated.View>
-          </Pressable>
-        </Animated.View>
-        <View style={styles.bottomContainer}>
-          <Animated.View style={buttonsAnimatedStyle}>
-            <Pressable style={styles.button} onPress={loginHandler}>
-              <Text style={styles.buttonText}>LOG IN</Text>
-            </Pressable>
-          </Animated.View>
-          <Animated.View style={buttonsAnimatedStyle}>
-            <Pressable style={styles.button} onPress={registerHandler}>
-              <Text style={styles.buttonText}>REGISTER</Text>
-            </Pressable>
-          </Animated.View>
-          <Animated.View style={[styles.formInputContainer, formAnimatedStyle]}>
-            <ScrollView >
-              <TextInput
-                placeholder="Email"
-                placeholderTextColor="white"
-                style={styles.textInput}
-                value={email}
-                autoCapitalize="none"
-                onChangeText={(text) => setEmail(text)}
-              />
-              {isRegistering && (
-                <View>
-                  <TextInput
-                    placeholder="First Name"
-                    placeholderTextColor="white"
-                    style={styles.textInput}
-                    onChangeText={(text) => setFirstName(text)}
-                  />
-                  <TextInput
-                    placeholder="Last Name"
-                    placeholderTextColor="white"
-                    style={styles.textInput}
-                    onChangeText={(text) => setLastName(text)}
-                  />
-                  <TextInput
-                    placeholder="Country"
-                    placeholderTextColor="white"
-                    style={styles.textInput}
-                    onChangeText={(text) => setCountry(text)}
-                  />
-                  <TouchableOpacity style={styles.button} onPress={handlePresentModal}><Text style={styles.buttonText}>Choose profile picture</Text></TouchableOpacity>
-                 <BottomSheetModal
-            ref={bottomSheetModalRef}
-            index={0}
-            snapPoints={snapPoints}
-            backdropComponent={renderBackdrop}
-          >
-            <View style={styles.panel}>
-              <Text style={styles.buttonText}>Upload Photo</Text>
-              <Text style={styles.buttonText}>
-                Choose Your Profile Picture
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleImageSelection(false)}
+            <Animated.View style={buttonsAnimatedStyle}>
+              <Pressable style={styles.button} onPress={registerHandler}>
+                <Text style={styles.buttonText}>REGISTER</Text>
+              </Pressable>
+            </Animated.View>
+            <Animated.View
+              style={[styles.formInputContainer, formAnimatedStyle]}
             >
-              <Text style={styles.buttonText}>Take Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleImageSelection(true)}
-            >
-              <Text style={styles.buttonText}>Choose From Library</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={handleCloseModal}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-          </BottomSheetModal>
-                </View>
+              <ScrollView>
+                <TextInput
+                  placeholder="Email"
+                  placeholderTextColor="white"
+                  style={styles.textInput}
+                  value={email}
+                  autoCapitalize="none"
+                  onChangeText={(text) => setEmail(text)}
+                />
+                {isRegistering && (
+                  <View>
+                    <TextInput
+                      placeholder="First Name"
+                      placeholderTextColor="white"
+                      style={styles.textInput}
+                      onChangeText={(text) => setFirstName(text)}
+                    />
+                    <TextInput
+                      placeholder="Last Name"
+                      placeholderTextColor="white"
+                      style={styles.textInput}
+                      onChangeText={(text) => setLastName(text)}
+                    />
+                    <TextInput
+                      placeholder="Country"
+                      placeholderTextColor="white"
+                      style={styles.textInput}
+                      onChangeText={(text) => setCountry(text)}
+                    />
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={handlePresentModal}
+                    >
+                      <Text style={styles.buttonText}>
+                        Choose profile picture
+                      </Text>
+                    </TouchableOpacity>
+                    <BottomSheetModal
+                      ref={bottomSheetModalRef}
+                      index={0}
+                      snapPoints={snapPoints}
+                      backdropComponent={renderBackdrop}
+                    >
+                      <View style={styles.panel}>
+                        <Text style={styles.buttonText}>Upload Photo</Text>
+                        <Text style={styles.buttonText}>
+                          Choose Your Profile Picture
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => handleImageSelection(false)}
+                      >
+                        <Text style={styles.buttonText}>Take Photo</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => handleImageSelection(true)}
+                      >
+                        <Text style={styles.buttonText}>
+                          Choose From Library
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.button}
+                        onPress={handleCloseModal}
+                      >
+                        <Text style={styles.buttonText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </BottomSheetModal>
+                  </View>
+                )}
+                <TextInput
+                  placeholder="Password"
+                  placeholderTextColor="white"
+                  style={styles.textInput}
+                  secureTextEntry={true}
+                  value={password}
+                  autoCapitalize="none"
+                  onChangeText={(text) => setPassword(text)}
+                />
+              </ScrollView>
+              {loading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+              ) : (
+                <>
+                  <Pressable onPress={handlePress}>
+                    <Animated.View
+                      style={[styles.formButton, formButtonAnimatedStyle]}
+                    >
+                      <Text style={styles.buttonText}>
+                        {isRegistering ? "REGISTER" : "LOG IN"}
+                      </Text>
+                    </Animated.View>
+                  </Pressable>
+                </>
               )}
-              <TextInput
-                placeholder="Password"
-                placeholderTextColor="white"
-                style={styles.textInput}
-                secureTextEntry={true}
-                value={password}
-                autoCapitalize="none"
-                onChangeText={(text) => setPassword(text)}
-              />
-            </ScrollView>
-            {loading ? (
-              <ActivityIndicator size="large" color="#0000ff" />
-            ) : (
-              <>
-                <Pressable onPress={handlePress}>
-                  <Animated.View
-                    style={[styles.formButton, formButtonAnimatedStyle]}
-                  >
-                    <Text style={styles.buttonText}>
-                      {isRegistering ? "REGISTER" : "LOG IN"}
-                    </Text>
-                  </Animated.View>
-                </Pressable>
-              </>
-            )}
-          </Animated.View>
-        </View>
-      </Animated.View>
-      </BottomSheetModalProvider> 
+            </Animated.View>
+          </View>
+        </Animated.View>
+      </BottomSheetModalProvider>
     </KeyboardAvoidingView>
   );
 }

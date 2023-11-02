@@ -15,10 +15,11 @@ import ExerciseSearchScreen from "./Screens/ExerciseSearchScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import EditProfileScreen from "./Screens/EditProfileScreen";
 import CreateWorkoutScreen from "./Screens/CreateWorkoutScreen";
+import WorkoutDetailsScreen from "./Screens/WorkoutDetailsScreen";
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const ProfileStack = ({ navigation, userId }) => (
+const ProfileStack = () => (
   <Stack.Navigator>
     <Stack.Screen
       name="TabProfile"
@@ -45,7 +46,7 @@ const ProfileStack = ({ navigation, userId }) => (
   </Stack.Navigator>
 );
 
-const ScheduleStack = ({ navigation, userId }) => (
+const ScheduleStack = () => (
   <Stack.Navigator>
     <Stack.Screen
       name="TabSchedule"
@@ -69,6 +70,21 @@ const ScheduleStack = ({ navigation, userId }) => (
         },
       }}
     />
+     <Stack.Screen
+      name="WorkoutDetails"
+      component={WorkoutDetailsScreen}
+      options={{
+        headerTitle: " ",
+        headerBackTitleVisible: false,
+        headerTitleAlign: "center",
+        headerTransparent: true,
+        headerStyle: {
+          backgroundColor: "#fff",
+          shadowColor: "#fff",
+          elevation: 0,
+        },
+      }}
+    />
   </Stack.Navigator>
 );
 
@@ -77,7 +93,7 @@ function MyTabs() {
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
-        tabBarStyle: { backgroundColor: "#000000" },
+        tabBarStyle: { backgroundColor: "black" },
         tabBarActiveTintColor: "white",
       }}
     >
@@ -172,5 +188,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "white",
   },
-  buttonText: {},
+ 
 });

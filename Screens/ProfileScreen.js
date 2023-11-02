@@ -14,53 +14,39 @@ import { MuscleMagicAuth, MuscleMagicDb } from "../Database/FireBaseConfig";
 import LoadingScreen from "../Components/LoadingComponent";
 import { fetchCurrentUser } from "../Components/FetchUserData";
 import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
+import {LinearGradient} from 'expo-linear-gradient';
 function ProfileScreen({ navigation }) {
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [workouts, setWorkouts] = useState(0);
-  const user = MuscleMagicAuth.currentUser;
-  const db = MuscleMagicDb;
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchCurrentUser();
-      setUserData(data);
-      setWorkouts(data.workouts);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
+  const { user, workouts, loading, error } = fetchCurrentUser();
+  const currentUser = MuscleMagicAuth.currentUser
   if (loading) {
     return <LoadingScreen />;
   }
 
-  if (!userData) {
-    return <Text>Error fetching user data</Text>; // Handle error scenario
+  if (error) {
+    return <Text>Error fetching user data: {error}</Text>; // Handle error scenario
   }
   const updatedWorkoutPlus = {
-    country: userData.country,
-    email: userData.email,
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    profileImageUrl: userData.profileImageUrl,
-    workouts: userData.workouts + 1,
-  };
-  const updatedWorkoutMinus = {
-    country: userData.country,
-    email: userData.email,
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    profileImageUrl: userData.profileImageUrl,
-    workouts: userData.workouts - 1,
+    country: user.country,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profileImageUrl: user.profileImageUrl,
+    workoutCounter: user.workoutCounter + 1,
   };
 
-  const updateUserProfile = async (user, updatedData) => {
+  const updatedWorkoutMinus = {
+    country: user.country,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profileImageUrl: user.profileImageUrl,
+    workoutCounter: user.workoutCounter - 1,
+  };
+
+  const updateUserProfile = async (updatedData) => {
     try {
-      const userRef = doc(collection(db, "users"), user.uid);
+      const userRef = doc(collection(MuscleMagicDb, "users"), currentUser.uid);
       await updateDoc(userRef, updatedData);
-      setWorkouts(prevWorkouts => prevWorkouts + updatedData.workouts - userData.workouts);
       console.log("Success");
     } catch (error) {
       console.error("Error updating user profile:", error);
@@ -69,69 +55,32 @@ function ProfileScreen({ navigation }) {
   
 
   return (
-        <ImageBackground style={StyleSheet.absoluteFill} source={require('../assets/bakgrundsbild.jpg')}>
-   
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <Image
-          style={styles.userImg}
-          source={{
-            uri: userData.profileImageUrl,
-          }}
-        ></Image>
-        <Text style={styles.userName}>{userData.firstName}</Text>
-        <Text style={styles.aboutUser}>
-          Lorem ipsum dolor sit amet, consecteur adipiscing elit. Mauris a elit
-          nisl.
-        </Text>
+    <LinearGradient style={styles.background} colors={["#0F0264", "#0F3362", "#030D01"]}>
+      <View style={styles.container}>
+        
+        <Image style={styles.userImg} source={{ uri: user.profileImageUrl }} />
+        <Text style={styles.userName}>{user.firstName}</Text>
+        <Text style={styles.aboutUser}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris a elit nisl.</Text>
         <View style={styles.userBtnWrapper}>
-          <TouchableOpacity
-            style={styles.userBtn}
-            onPress={() => {
-              navigation.navigate("EditProfile");
-            }}
-          >
+          <TouchableOpacity style={styles.userBtn} onPress={() => navigation.navigate("EditProfile")}>
             <Text style={styles.userBtnTxt}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-            <Text
-              style={styles.userBtnTxt}
-              onPress={() => MuscleMagicAuth.signOut()}
-            >
-              LogOut
-            </Text>
+          <TouchableOpacity style={styles.userBtn} onPress={() => MuscleMagicAuth.signOut()}>
+            <Text style={styles.userBtnTxt}>LogOut</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.userInfoWrapper}>
-          <View style={styles.userInfoItem}>
-            <TouchableOpacity
-              style={styles.plusButton}
-              onPress={() => {
-                updateUserProfile(user, updatedWorkoutMinus);
-              }}
-            >
-              <Text style={{ fontSize: 50 }}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.userInfoTitle}>{workouts}</Text>
-            <TouchableOpacity
-              style={styles.minusButton}
-              onPress={() => {
-                updateUserProfile(user, updatedWorkoutPlus);
-              }}
-            >
-              <Text style={{ fontSize: 50 }}>+</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.plusButton} onPress={() => updateUserProfile(updatedWorkoutMinus)}>
+            <Text style={{ fontSize: 50 }}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.userInfoTitle}>{user.workoutCounter}</Text>
+          <TouchableOpacity style={styles.minusButton} onPress={() => updateUserProfile(updatedWorkoutPlus)}>
+            <Text style={{ fontSize: 50 }}>+</Text>
+          </TouchableOpacity>
         </View>
         <Text style={styles.userInfoSubTitle}>Workouts</Text>
-      </ScrollView>
-      </ImageBackground>
+      </View>
+    </LinearGradient>
   );
 }
 
@@ -143,7 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(52, 52, 52, 0.0)',
     padding: 20,
     marginTop: 70,
-    
+    alignItems: "center"
   },
   userImg: {
     height: 150,
@@ -155,12 +104,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 10,
     marginBottom: 10,
-    color: "white"
+    color: "#C5C5CD"
   },
   aboutUser: {
     fontSize: 12,
     fontWeight: "600",
-    color: "white",
+    color: "#C5C5CD",
     textAlign: "center",
     marginBottom: 10,
     
@@ -176,10 +125,10 @@ const styles = StyleSheet.create({
     borderColor: "#2e64e5",
     borderWidth: 2,
     borderRadius: 3,
-    paddingVertical: 11,
-    paddingHorizontal: 40,
+    width: 100,
     marginHorizontal: 3,
-    
+    justifyContent: "center",
+    alignItems: "center"
   },
   userBtnTxt: {
     color: "#2e64e5",
@@ -204,7 +153,10 @@ const styles = StyleSheet.create({
   },
   userInfoSubTitle: {
     fontSize: 20,
-    color: "white",
+    color: "#C5C5CD",
     textAlign: "center",
   },
+  background :{
+    ...StyleSheet.absoluteFill
+  }
 });

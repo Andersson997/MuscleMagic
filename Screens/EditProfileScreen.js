@@ -3,21 +3,12 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
-  SafeAreaView,
-  ScrollView,
   TouchableOpacity,
-  Pressable,
-  Button,
   TextInput,
 } from "react-native";
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import * as FileSystem from "expo-file-system";
-import * as ImagePicker from "expo-image-picker";
-import Animated from "react-native-reanimated";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import Feather from "react-native-vector-icons/Feather";
 import "react-native-gesture-handler";
 import {
   BottomSheetModal,
@@ -27,20 +18,31 @@ import {
 import LoadingScreen from "../Components/LoadingComponent";
 import { fetchCurrentUser } from "../Components/FetchUserData";
 import { MuscleMagicAuth, MuscleMagicDb } from "../Database/FireBaseConfig";
-import { doc, getDoc, collection, updateDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { doc, collection, updateDoc } from "firebase/firestore";
 
+import {LinearGradient} from 'expo-linear-gradient'
+import { selectImage } from "../Components/SelectImageComponent";
 function EditProfileScreen() {
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
   const bottomSheetModalRef = useRef(null);
   const snapPoints = ["48%"];
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [country, setCountry] = useState("");
-  const user = MuscleMagicAuth.currentUser;
+  const currentUser = MuscleMagicAuth.currentUser;
   const db = MuscleMagicDb;
+
+  const { user, workouts, loading, error } = fetchCurrentUser();
+
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || ""); 
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setCountry(user.country || "");
+    }
+  }, [user]);
 
   function handlePresentModal() {
     bottomSheetModalRef.current?.present();
@@ -60,78 +62,13 @@ function EditProfileScreen() {
     ),
     []
   );
-  const selectImage = function (useLibrary) {
-    const options = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.1,
-    };
-
-    if (useLibrary) {
-      return new Promise(function (resolve, reject) {
-        ImagePicker.launchImageLibraryAsync(options)
-          .then(function (response) {
-            if (
-              !response.canceled &&
-              response.assets &&
-              response.assets.length > 0
-            ) {
-              resolve(response);
-            } else {
-              reject("Image selection cancelled");
-            }
-          })
-          .then(function () {
-            handleCloseModal();
-          })
-          .catch(function (error) {
-            reject(error);
-          });
-      });
-    } else {
-      return new Promise(function (resolve, reject) {
-        ImagePicker.requestCameraPermissionsAsync()
-          .then(function () {
-            return ImagePicker.launchCameraAsync(options);
-          })
-          .then(function (response) {
-            if (
-              !response.canceled &&
-              response.assets &&
-              response.assets.length > 0
-            ) {
-              resolve(response);
-            } else {
-              reject("Camera operation cancelled");
-            }
-          })
-          .then(function () {
-            handleCloseModal();
-          })
-          .catch(function (error) {
-            reject(error);
-          });
-      });
-    }
-  };
-  const [userData, setUserData] = useState(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchCurrentUser();
-      setUserData(data);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
+  
 
   if (loading) {
     return <LoadingScreen />;
   }
 
-  if (!userData) {
+  if (error) {
     return <Text>Error fetching user data</Text>; // Handle error scenario
   }
   const updatedData = {
@@ -139,11 +76,13 @@ function EditProfileScreen() {
     email: email,
     firstName: firstName,
     lastName: lastName,
+    profileImageUrl: user.profileImageUrl,
+    workoutCounter: user.workoutCounter
   };
   
-  const updateUserProfile = async (user, updatedData) => {
+  const updateUserProfile = async (updatedData) => {
     try {
-      const userRef = doc(collection(db, "users"), user.uid);
+      const userRef = doc(collection(db, "users"), currentUser.uid);
       await updateDoc(userRef, updatedData);
       console.log("User profile updated successfully!");
     } catch (error) {
@@ -154,6 +93,7 @@ function EditProfileScreen() {
   return (
     <BottomSheetModalProvider>
       <View style={styles.container}>
+      <LinearGradient style={styles.background} colors={["#0F0264", "#0F3362", "#030D01"]}/>
         <View style={styles.contentContainer}>
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity onPress={handlePresentModal}>
@@ -169,7 +109,7 @@ function EditProfileScreen() {
               >
                 <ImageBackground
                  source={{
-                    uri: userData.profileImageUrl,
+                    uri: user.profileImageUrl,
                   }}
                   style={{ height: 150, width: 150 }}
                   imageStyle={{ borderRadius: 15 }}
@@ -199,54 +139,54 @@ function EditProfileScreen() {
               </View>
             </TouchableOpacity>
             <View style={{ marginTop: 30 }}>
-              <Text style={{ marginTop: 10, fontSize: 18, fontWeight: "bold" }}>
-                {userData.firstName}
+              <Text style={{ marginTop: 10, fontSize: 18, fontWeight: "bold", color: "#C5C5CD" }}>
+                {user.firstName}
               </Text>
             </View>
             <View style={styles.action}>
-              <FontAwesome name="user-o" size={20} />
+              <FontAwesome name="user-o" size={20} style={{ color:"#C5C5CD"}} />
               <TextInput
                 placeholder="Firstname"
                 placeholderTextColor="#666666"
                 style={styles.textInput}
                 onChangeText={(text) => setFirstName(text)}
-              >{userData.firstName}</TextInput>
+              >{user.firstName}</TextInput>
             </View>
             <View style={styles.action}>
-              <FontAwesome name="user-o" size={20} />
+              <FontAwesome name="user-o" size={20} style={{ color:"#C5C5CD"}} />
               <TextInput
                 placeholder="Lastname"
                 placeholderTextColor="#666666"
                 style={styles.textInput}
                 onChangeText={(text) => setLastName(text)}
-              >{userData.lastName}</TextInput>
+              >{user.lastName}</TextInput>
             </View>
             <View style={styles.action}>
-              <FontAwesome name="envelope-o" size={20} />
+              <FontAwesome name="envelope-o" size={20} style={{ color:"#C5C5CD"}} />
               <TextInput
                 placeholder="Email"
                 keyboardType="email-address"
                 placeholderTextColor="#666666"
                 style={styles.textInput}
                 onChangeText={(text) => setEmail(text)}
-              >{userData.email}</TextInput>
+              >{user.email}</TextInput>
             </View>
             <View style={styles.action}>
-              <FontAwesome name="globe" size={20} />
+              <FontAwesome name="globe" size={20} style={{ color:"#C5C5CD"}}/>
               <TextInput
                 placeholder="Country"
                 placeholderTextColor="#666666"
                 style={styles.textInput}
                 onChangeText={(text) => setCountry(text)}
-              >{userData.country}</TextInput>
+              >{user.country}</TextInput>
             </View>
             <TouchableOpacity
-              style={styles.commandButton}
+              style={styles.saveButton}
               onPress={() => {
-                updateUserProfile(user, updatedData);
+                updateUserProfile(updatedData);
               }}
             >
-              <Text style={styles.panelButtonTitle}>Submit</Text>
+              <Text style={styles.panelButtonTitle}>Save</Text>
             </TouchableOpacity>
           </View>
           <BottomSheetModal
@@ -297,12 +237,14 @@ const styles = StyleSheet.create({
     margin: 20,
     marginTop: 90,
   },
-  commandButton: {
-    padding: 15,
+  saveButton: {
+    paddingHorizontal: 40,
+    paddingVertical: 15,
     borderRadius: 10,
-    backgroundColor: "#FF6347",
+    backgroundColor: "#030266",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 240,
+    marginBottom: 30,
   },
   panel: {
     padding: 20,
@@ -357,7 +299,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f2f2f2",
+    borderBottomColor: "#C5C5CD",
     paddingBottom: 5,
   },
   actionError: {
@@ -371,6 +313,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: Platform.OS === "ios" ? 0 : -12,
     paddingLeft: 10,
-    color: "#333333",
+    color:"#C5C5CD",
   },
+  background :{
+    ...StyleSheet.absoluteFill
+  }
 });

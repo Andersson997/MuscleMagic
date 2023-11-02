@@ -8,26 +8,114 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useRef, useCallback } from "react";
 import { doc, getDoc, collection, setDoc } from "firebase/firestore";
 import { MuscleMagicAuth, MuscleMagicDb } from "../Database/FireBaseConfig";
 import ExerciseForm from "../Components/ExerciseForm";
-function CreateWorkoutScreen() {
+import { Dropdown } from "react-native-element-dropdown";
+import { LinearGradient } from "expo-linear-gradient";
+import "react-native-gesture-handler";
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
+function CreateWorkoutScreen({navigation}) {
   const user = MuscleMagicAuth.currentUser;
   const db = MuscleMagicDb;
+  const bottomSheetModalRef = useRef(null);
+  const snapPoints = ["50%"];
+  const data = [
+    { label: "Monday", value: "1" },
+    { label: "Tuesday", value: "2" },
+    { label: "Wednesday", value: "3" },
+    { label: "Thursday", value: "4" },
+    { label: "Friday", value: "5" },
+    { label: "Saturday", value: "6" },
+    { label: "Sunday", value: "7" },
+  ];
+  const [value, setValue] = useState(null);
+
+  const renderItem = (item) => {
+    return (
+      <View style={styles.item}>
+        <Text style={styles.textItem}>{item.label}</Text>
+      </View>
+    );
+  };
+  function handlePresentModal() {
+    bottomSheetModalRef.current?.present();
+  }
+  function handleCloseModal() {
+    bottomSheetModalRef.current?.close();
+  }
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={1}
+        animatedIndex={{
+          value: 1,
+        }}
+      />
+    ),
+    []
+  );
   const [workoutData, setWorkoutData] = useState({
     name: "",
     description: "",
-    exercises: [],
+    exercisesMonday: [],
+    exercisesTuesday: [],
+    exercisesWednesday: [],
+    exercisesThursday: [],
+    exercisesFriday: [],
+    exercisesSaturday: [],
+    exercisesSunday: [],
   });
 
-  const addExercise = (exerciseData) => {
+  const addExerciseMonday = (exerciseData) => {
     setWorkoutData((prevData) => ({
       ...prevData,
-      exercises: [...prevData.exercises, exerciseData],
+      exercisesMonday: [...prevData.exercisesMonday, exerciseData],
+    }));
+  };
+  const addExerciseTuesday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesTuesday: [...prevData.exercisesTuesday, exerciseData],
+    }));
+  };
+  const addExerciseWednesday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesWednesday: [...prevData.exercisesWednesday, exerciseData],
+    }));
+  };
+  const addExerciseThursday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesThursday: [...prevData.exercisesThursday, exerciseData],
+    }));
+  };
+  const addExerciseFriday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesFriday: [...prevData.exercisesFriday, exerciseData],
+    }));
+  };
+  const addExerciseSaturday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesSaturday: [...prevData.exercisesSaturday, exerciseData],
+    }));
+  };
+  const addExerciseSunday = (exerciseData) => {
+    setWorkoutData((prevData) => ({
+      ...prevData,
+      exercisesSunday: [...prevData.exercisesSunday, exerciseData],
     }));
   };
 
@@ -37,47 +125,109 @@ function CreateWorkoutScreen() {
   const saveWorkout = () => {
     setDoc(doc(workoutsCollectionRef), workoutData)
       .then(() => {
-        console.log("Workout plan added successfully!");
+        navigation.navigate("TabSchedule");
       })
       .catch((error) => {
         console.error("Error adding workout plan:", error);
       });
   };
-
+  
   return (
+    <BottomSheetModalProvider>
     <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : "undefined"}
-  >
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "undefined"}
+    >
+      <LinearGradient
+        style={styles.background}
+        colors={["#0F0264", "#0F3362", "#030D01"]}
+      />
       <ScrollView style={styles.scrollview}>
-    <View style={styles.container}>
-      <View style={styles.formInputContainer}>
-        <TextInput
-          placeholder="Name"
-          placeholderTextColor="black"
-          style={styles.textInput}
-          value={workoutData.name}
-          autoCapitalize="none"
-          onChangeText={(text) =>
-            setWorkoutData((prevData) => ({ ...prevData, name: text }))
-          }
-        />
-        <TextInput
-          placeholder="Description"
-          placeholderTextColor="black"
-          style={styles.textInput}
-          value={workoutData.description}
-          autoCapitalize="none"
-          onChangeText={(text) =>
-            setWorkoutData((prevData) => ({ ...prevData, description: text }))
-          }
-        />
-      </View>
-      <ExerciseForm onAddExercise={addExercise} />
-      <TouchableOpacity style={styles.saveButton} onPress={saveWorkout}><Text style={{fontSize: 16, color: "white", textAlign: "center", marginTop: 8 }}>Save</Text></TouchableOpacity>
-    </View>
-    </ScrollView>
+        <View style={styles.container}>
+          <View style={styles.formInputContainer}>
+            <TextInput
+              placeholder="Name"
+              placeholderTextColor="#C5C5CD"
+              style={styles.textInput}
+              value={workoutData.name}
+              autoCapitalize="none"
+              onChangeText={(text) =>
+                setWorkoutData((prevData) => ({ ...prevData, name: text }))
+              }
+            />
+            <TextInput
+              placeholder="Description"
+              placeholderTextColor="#C5C5CD"
+              style={styles.textInput}
+              value={workoutData.description}
+              autoCapitalize="none"
+              onChangeText={(text) =>
+                setWorkoutData((prevData) => ({
+                  ...prevData,
+                  description: text,
+                }))
+              }
+            />
+          </View>
+          <Dropdown
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            iconStyle={styles.iconStyle}
+            data={data}
+            maxHeight={300}
+            labelField="label"
+            valueField="value"
+            placeholder="Choose day"
+            value={value}
+            onChange={(item) => {
+              setValue(item.value);
+            }}
+            renderItem={renderItem}
+          />
+          <ExerciseForm
+
+            onAddExercise={
+              value === "1"
+                ? addExerciseMonday
+                : value === "2"
+                ? addExerciseTuesday
+                : value === "3"
+                ? addExerciseWednesday
+                : value === "4"
+                ? addExerciseThursday
+                : value === "5"
+                ? addExerciseFriday
+                : value === "6"
+                ? addExerciseSaturday
+                : value === "7"
+                ? addExerciseSunday
+                : null
+            }
+          />
+
+          <TouchableOpacity style={styles.saveButton} onPress={saveWorkout}>
+            <Text
+              style={{
+                fontSize: 16,
+                color: "white",
+                textAlign: "center",
+                marginTop: 8,
+              }}
+            >
+              Save
+            </Text>
+          </TouchableOpacity>
+          <BottomSheetModal
+          ref={bottomSheetModalRef}
+          index={0}
+          snapPoints={snapPoints}
+          backdropComponent={renderBackdrop}
+        ></BottomSheetModal>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
+    </BottomSheetModalProvider>
   );
 }
 
@@ -92,7 +242,8 @@ const styles = StyleSheet.create({
     height: 50,
     width: 200,
     borderWidth: 1,
-    borderColor: "black",
+    color: "#C5C5CD",
+    borderColor: "#C5C5CD",
     marginHorizontal: 20,
     marginVertical: 10,
     borderRadius: 25,
@@ -101,10 +252,54 @@ const styles = StyleSheet.create({
   saveButton: {
     height: 40,
     width: 150,
-    backgroundColor: "black",
-    borderRadius: 20
+    backgroundColor: "#030266",
+    borderRadius: 20,
+    
   },
   scrollview: {
-      marginTop: 150
-  }
+    marginTop: 150,
+  },
+  dropdown: {
+    margin: 16,
+    height: 50,
+    width: 150,
+    backgroundColor: "#030266",
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    
+    elevation: 2,
+  },
+  icon: {
+    marginRight: 5,
+    
+  },
+  item: {
+    padding: 17,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#030266",
+  },
+  textItem: {
+    flex: 1,
+    fontSize: 16,
+    color: "white"
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: "white"
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+  },
+  background: {
+    ...StyleSheet.absoluteFill,
+  },
 });

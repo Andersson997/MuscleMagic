@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { decode } from "html-entities";
+import { LinearGradient } from "expo-linear-gradient";
 function ExerciseSearchScreen() {
   const [triviaList, setTriviaList] = useState([]);
   const [visibleAnswers, setVisibleAnswers] = useState({});
@@ -42,11 +43,15 @@ function ExerciseSearchScreen() {
   });
 
   return (
+       <LinearGradient
+        style={styles.background}
+        colors={["#0F0264", "#0F3362", "#030D01"]}
+      >
     <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Search exercises"
-        placeholderTextColor="black"
+        placeholderTextColor="#C5C5CD"
         value={searchQuery}
         onChangeText={(text) => setSearchQuery(text)}
       />
@@ -56,13 +61,13 @@ function ExerciseSearchScreen() {
       <ScrollView>
         {filteredTriviaList.map(
           (trivia, index) => (
-            // (trivia.description = trivia.description
-            //   .replace("<p>", "")
-            //   .replace("</p>", "")
-            //   .replace("<ol>", "")
-            //   .replace("</ol>", "")
-            //   .replace("<li>", "")
-            //   .replace("</li>", "")),
+            (trivia.description = trivia.description
+              .replace("<p>", "")
+              .replace("</p>", "")
+              .replace("<ol>", "")
+              .replace("</ol>", "")
+              .replace("<li>", "")
+              .replace("</li>", "")),
             (
               <Pressable onPress={() => handleToggleAnswer(index)} key={index}>
                 <View key={index}>
@@ -73,7 +78,7 @@ function ExerciseSearchScreen() {
                       <View>
                         <Text style={styles.text}>Description</Text>
                         <Text style={styles.text}>
-                          {decode(trivia.instructions, { level: "all" })}
+                          {decode(trivia.description, { level: "all" })}
                         </Text>
                       </View>
                     )}
@@ -85,6 +90,7 @@ function ExerciseSearchScreen() {
         )}
       </ScrollView>
     </View>
+    </LinearGradient>
   );
 }
 
@@ -107,9 +113,10 @@ const styles = StyleSheet.create({
   headerText: {
     marginBottom: 15,
     fontSize: 17,
+    color: "#C5C5CD"
   },
   text: {
-    color: "white",
+    color: "#C5C5CD",
     fontSize: 20,
     lineHeight: 35,
     fontWeight: "bold",
@@ -117,7 +124,7 @@ const styles = StyleSheet.create({
   },
   questions: {
     flex: 1,
-    backgroundColor: "teal",
+    backgroundColor: "black",
     borderRadius: 5,
     marginLeft: 10,
     marginRight: 10,
@@ -129,12 +136,15 @@ const styles = StyleSheet.create({
     height: 50,
     width: 300,
     borderWidth: 1,
-    borderColor: "black",
+    borderColor: "white",
     marginHorizontal: 20,
     marginVertical: 10,
     borderRadius: 25,
     paddingLeft: 10,
     textAlign: "center",
     fontSize: 17,
+  },
+  background: {
+    ...StyleSheet.absoluteFill,
   },
 });
